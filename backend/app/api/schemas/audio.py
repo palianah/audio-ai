@@ -48,7 +48,9 @@ class SeparationResult(BaseModel):
 
 
 class EffectConfig(BaseModel):
-    type: str = Field(description="Effect type: eq, compression, reverb, noise_reduction, normalize")
+    type: str = Field(
+        description="Effect type: eq, compression, reverb, noise_reduction, normalize"
+    )
     params: dict = Field(default_factory=dict)
 
 
