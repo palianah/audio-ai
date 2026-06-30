@@ -14,9 +14,7 @@ class AudioEditor:
         """Cut a segment from audio."""
         raise NotImplementedError
 
-    async def merge(
-        self, input_paths: list[str], output_path: str
-    ) -> str:
+    async def merge(self, input_paths: list[str], output_path: str) -> str:
         """Merge multiple audio files into one."""
         raise NotImplementedError
 
