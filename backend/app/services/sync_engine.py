@@ -3,7 +3,6 @@
 from dataclasses import dataclass, field
 
 import numpy as np
-
 from app.services.vad import SpeechSegment
 
 
@@ -100,21 +99,15 @@ class SyncEngine:
                 ],
             )
 
-        audio_timeline = self._segments_to_timeline(
-            audio_segments, total_duration_s
-        )
+        audio_timeline = self._segments_to_timeline(audio_segments, total_duration_s)
 
         best_face_id = -1
         best_offset = 0
         best_score = -1.0
 
         for face_id, lip_segs in lip_segments_by_face.items():
-            lip_timeline = self._segments_to_timeline(
-                lip_segs, total_duration_s
-            )
-            offset, score = self._cross_correlate(
-                audio_timeline, lip_timeline
-            )
+            lip_timeline = self._segments_to_timeline(lip_segs, total_duration_s)
+            offset, score = self._cross_correlate(audio_timeline, lip_timeline)
             if score > best_score:
                 best_score = score
                 best_offset = offset
@@ -124,9 +117,7 @@ class SyncEngine:
             guide_timeline = self._segments_to_timeline(
                 guide_segments, total_duration_s
             )
-            offset, score = self._cross_correlate(
-                audio_timeline, guide_timeline
-            )
+            offset, score = self._cross_correlate(audio_timeline, guide_timeline)
             if score > best_score:
                 best_score = score
                 best_offset = offset
@@ -200,9 +191,7 @@ class SyncEngine:
         Returns:
             (offset_bins, normalized_score)
         """
-        max_shift = int(
-            self.max_offset_s * 1000 / self.resolution_ms
-        )
+        max_shift = int(self.max_offset_s * 1000 / self.resolution_ms)
         n = max(len(audio_tl), len(lip_tl))
 
         a_pad = np.zeros(n, dtype=np.float32)
@@ -279,12 +268,8 @@ class SyncEngine:
                 ratio = lip_dur / audio_dur if audio_dur > 0.01 else 1.0
 
                 seg_map = SegmentMap(
-                    audio_start_s=round(
-                        audio_seg.start_s - offset_s, 3
-                    ),
-                    audio_end_s=round(
-                        audio_seg.end_s - offset_s, 3
-                    ),
+                    audio_start_s=round(audio_seg.start_s - offset_s, 3),
+                    audio_end_s=round(audio_seg.end_s - offset_s, 3),
                     lip_start_s=round(lip_seg.start_s, 3),
                     lip_end_s=round(lip_seg.end_s, 3),
                     stretch_ratio=round(ratio, 4),

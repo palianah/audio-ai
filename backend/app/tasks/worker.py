@@ -1,8 +1,7 @@
 """Celery worker configuration for async audio processing tasks."""
 
-from celery import Celery
-
 from app.core.config import settings
+from celery import Celery
 
 worker = Celery(
     "audio_ai",

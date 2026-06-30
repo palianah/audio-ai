@@ -5,7 +5,6 @@ from dataclasses import dataclass
 
 import numpy as np
 import soundfile as sf
-
 from app.services.sync_engine import SegmentMap, SyncNote
 
 logger = logging.getLogger(__name__)
@@ -39,9 +38,7 @@ class TimeStretchEngine:
 
             return "rubberband"
         except ImportError:
-            logger.warning(
-                "pyrubberband not available, falling back to librosa"
-            )
+            logger.warning("pyrubberband not available, falling back to librosa")
             return "librosa"
 
     def stretch_segment(
@@ -71,9 +68,7 @@ class TimeStretchEngine:
             return self._stretch_librosa(audio, sr, ratio)
 
     @staticmethod
-    def _stretch_rubberband(
-        audio: np.ndarray, sr: int, ratio: float
-    ) -> np.ndarray:
+    def _stretch_rubberband(audio: np.ndarray, sr: int, ratio: float) -> np.ndarray:
         """Stretch using pyrubberband (highest quality)."""
         import pyrubberband as pyrb
 
@@ -81,9 +76,7 @@ class TimeStretchEngine:
         return stretched.astype(np.float32)
 
     @staticmethod
-    def _stretch_librosa(
-        audio: np.ndarray, sr: int, ratio: float
-    ) -> np.ndarray:
+    def _stretch_librosa(audio: np.ndarray, sr: int, ratio: float) -> np.ndarray:
         """Stretch using librosa (fallback)."""
         import librosa
 
@@ -115,9 +108,7 @@ class TimeStretchEngine:
         output = np.zeros(target_samples, dtype=np.float32)
         notes: list[SyncNote] = []
 
-        sorted_maps = sorted(
-            segment_maps, key=lambda m: m.lip_start_s
-        )
+        sorted_maps = sorted(segment_maps, key=lambda m: m.lip_start_s)
 
         for seg_map in sorted_maps:
             src_start = int(seg_map.audio_start_s * sr)
@@ -149,9 +140,7 @@ class TimeStretchEngine:
                 ratio = 1.0
             else:
                 try:
-                    stretched = self.stretch_segment(
-                        segment_audio, sr, ratio
-                    )
+                    stretched = self.stretch_segment(segment_audio, sr, ratio)
                 except Exception as e:
                     logger.error(
                         "Time-stretch failed at %.1fs: %s",
@@ -187,18 +176,12 @@ class TimeStretchEngine:
                     stretched[:fade_samples] *= fade_in
                     stretched[-fade_samples:] *= fade_out
 
-                output[dst_start : dst_start + length] += stretched[
-                    :length
-                ]
+                output[dst_start : dst_start + length] += stretched[:length]
 
-        return StretchedAudio(
-            audio=output, sample_rate=sr, notes=notes
-        )
+        return StretchedAudio(audio=output, sample_rate=sr, notes=notes)
 
     @staticmethod
-    def save(
-        stretched: StretchedAudio, output_path: str
-    ) -> str:
+    def save(stretched: StretchedAudio, output_path: str) -> str:
         """Save stretched audio to WAV file."""
         sf.write(
             output_path,

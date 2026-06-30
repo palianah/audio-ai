@@ -4,9 +4,7 @@ from dataclasses import dataclass, field
 
 import cv2
 import numpy as np
-
 from app.services.vad import SpeechSegment
-
 
 UPPER_LIP = [61, 185, 40, 39, 37, 0, 267, 269, 270, 409, 291]
 LOWER_LIP = [146, 91, 181, 84, 17, 314, 405, 321, 375, 291, 61]
@@ -121,15 +119,9 @@ class LipDetector:
         lm = face_landmarks.landmark  # type: ignore[attr-defined]
 
         top = np.array([lm[MOUTH_TOP].x * w, lm[MOUTH_TOP].y * h])
-        bottom = np.array(
-            [lm[MOUTH_BOTTOM].x * w, lm[MOUTH_BOTTOM].y * h]
-        )
-        left = np.array(
-            [lm[MOUTH_LEFT].x * w, lm[MOUTH_LEFT].y * h]
-        )
-        right = np.array(
-            [lm[MOUTH_RIGHT].x * w, lm[MOUTH_RIGHT].y * h]
-        )
+        bottom = np.array([lm[MOUTH_BOTTOM].x * w, lm[MOUTH_BOTTOM].y * h])
+        left = np.array([lm[MOUTH_LEFT].x * w, lm[MOUTH_LEFT].y * h])
+        right = np.array([lm[MOUTH_RIGHT].x * w, lm[MOUTH_RIGHT].y * h])
 
         vertical = float(np.linalg.norm(top - bottom))
         horizontal = float(np.linalg.norm(left - right))
@@ -139,9 +131,7 @@ class LipDetector:
         return vertical / horizontal
 
     @staticmethod
-    def _face_center(
-        face_landmarks: object, w: int, h: int
-    ) -> tuple[float, float]:
+    def _face_center(face_landmarks: object, w: int, h: int) -> tuple[float, float]:
         """Get approximate center of face from nose tip (landmark 1)."""
         lm = face_landmarks.landmark  # type: ignore[attr-defined]
         return lm[1].x * w, lm[1].y * h
@@ -154,10 +144,7 @@ class LipDetector:
         best_dist = self.face_match_distance
 
         for track in tracks:
-            dist = np.sqrt(
-                (track.center_x - cx) ** 2
-                + (track.center_y - cy) ** 2
-            )
+            dist = np.sqrt((track.center_x - cx) ** 2 + (track.center_y - cy) ** 2)
             if dist < best_dist:
                 best_dist = dist
                 best = track
@@ -174,9 +161,7 @@ class LipDetector:
             if len(track.frame_indices) < 3:
                 continue
 
-            smoothed = self._smooth_speaking(
-                track.speaking_frames, window=3
-            )
+            smoothed = self._smooth_speaking(track.speaking_frames, window=3)
 
             segments: list[SpeechSegment] = []
             in_speech = False
@@ -221,9 +206,7 @@ class LipDetector:
         return result
 
     @staticmethod
-    def _smooth_speaking(
-        speaking: list[bool], window: int = 3
-    ) -> list[bool]:
+    def _smooth_speaking(speaking: list[bool], window: int = 3) -> list[bool]:
         """Smooth speaking detection to reduce flicker."""
         if len(speaking) < window:
             return speaking

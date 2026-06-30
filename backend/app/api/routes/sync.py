@@ -3,8 +3,6 @@
 import os
 import uuid
 
-from fastapi import APIRouter, File, HTTPException, UploadFile
-
 from app.api.schemas.video import (
     SyncAnalysisResponse,
     SyncApplyRequest,
@@ -14,6 +12,7 @@ from app.api.schemas.video import (
     VideoUploadResponse,
 )
 from app.core.config import settings
+from fastapi import APIRouter, File, HTTPException, UploadFile
 
 router = APIRouter(prefix="/api", tags=["sync"])
 
@@ -107,9 +106,7 @@ async def analyze_sync(
     sync_engine = SyncEngine()
 
     frames = VideoProcessor.load_frames(video_info.frames_dir)
-    lip_segments = lip_detector.analyze_frames(
-        frames, fps=10.0
-    )
+    lip_segments = lip_detector.analyze_frames(frames, fps=10.0)
 
     guide_segments = None
     if video_info.audio_path:
@@ -128,10 +125,7 @@ async def analyze_sync(
             guide_segments=guide_segments,
         )
 
-        from app.api.schemas.video import (
-            SegmentMapSchema,
-            StemSyncResult,
-        )
+        from app.api.schemas.video import SegmentMapSchema, StemSyncResult
 
         results.append(
             StemSyncResult(
@@ -203,9 +197,7 @@ async def apply_sync(
     output_files: dict[str, str] = {}
     all_notes: list[SyncNoteSchema] = []
 
-    output_dir = os.path.join(
-        settings.output_dir, "synced", request.video_id
-    )
+    output_dir = os.path.join(settings.output_dir, "synced", request.video_id)
     os.makedirs(output_dir, exist_ok=True)
 
     for stem_result in request.stem_results:
@@ -232,9 +224,7 @@ async def apply_sync(
             total_duration_s=video_info.duration_s,
         )
 
-        out_path = os.path.join(
-            output_dir, f"{stem_result.stem_id}_synced.wav"
-        )
+        out_path = os.path.join(output_dir, f"{stem_result.stem_id}_synced.wav")
         stretcher.save(stretched, out_path)
         output_files[stem_result.stem_id] = out_path
 
@@ -248,6 +238,4 @@ async def apply_sync(
                 )
             )
 
-    return SyncApplyResponse(
-        output_files=output_files, notes=all_notes
-    )
+    return SyncApplyResponse(output_files=output_files, notes=all_notes)

@@ -8,7 +8,6 @@ from pathlib import Path
 
 import cv2
 import numpy as np
-
 from app.core.config import settings
 
 
@@ -79,15 +78,15 @@ class VideoProcessor:
         """Extract video metadata using ffprobe."""
         cmd = [
             "ffprobe",
-            "-v", "quiet",
-            "-print_format", "json",
+            "-v",
+            "quiet",
+            "-print_format",
+            "json",
             "-show_format",
             "-show_streams",
             video_path,
         ]
-        result = subprocess.run(
-            cmd, capture_output=True, text=True, check=True
-        )
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
 
         import json
 
@@ -145,9 +144,7 @@ class VideoProcessor:
                 break
 
             if frame_idx % frame_interval == 0:
-                filename = os.path.join(
-                    frames_dir, f"frame_{saved:06d}.jpg"
-                )
+                filename = os.path.join(frames_dir, f"frame_{saved:06d}.jpg")
                 cv2.imwrite(filename, frame)
                 saved += 1
 
@@ -161,11 +158,15 @@ class VideoProcessor:
         cmd = [
             "ffmpeg",
             "-y",
-            "-i", video_path,
+            "-i",
+            video_path,
             "-vn",
-            "-acodec", "pcm_s16le",
-            "-ar", "16000",
-            "-ac", "1",
+            "-acodec",
+            "pcm_s16le",
+            "-ar",
+            "16000",
+            "-ac",
+            "1",
             output_path,
         ]
         subprocess.run(cmd, capture_output=True, check=True)
@@ -173,11 +174,7 @@ class VideoProcessor:
     @staticmethod
     def load_frames(frames_dir: str) -> list[np.ndarray]:
         """Load extracted frames as numpy arrays (BGR)."""
-        frame_files = sorted(
-            f
-            for f in os.listdir(frames_dir)
-            if f.endswith(".jpg")
-        )
+        frame_files = sorted(f for f in os.listdir(frames_dir) if f.endswith(".jpg"))
         frames = []
         for fname in frame_files:
             img = cv2.imread(os.path.join(frames_dir, fname))
@@ -186,8 +183,6 @@ class VideoProcessor:
         return frames
 
     @staticmethod
-    def frame_index_to_time(
-        frame_index: int, extraction_fps: float
-    ) -> float:
+    def frame_index_to_time(frame_index: int, extraction_fps: float) -> float:
         """Convert frame index to timestamp in seconds."""
         return frame_index / extraction_fps

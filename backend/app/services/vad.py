@@ -63,9 +63,7 @@ class VoiceActivityDetector:
         if sr != self.sample_rate:
             import librosa
 
-            audio = librosa.resample(
-                audio, orig_sr=sr, target_sr=self.sample_rate
-            )
+            audio = librosa.resample(audio, orig_sr=sr, target_sr=self.sample_rate)
 
         return audio
 
@@ -98,18 +96,12 @@ class VoiceActivityDetector:
 
         return segments
 
-    def _get_speech_timestamps(
-        self, audio: torch.Tensor
-    ) -> list[dict]:
+    def _get_speech_timestamps(self, audio: torch.Tensor) -> list[dict]:
         """Run VAD on audio tensor, return raw timestamps."""
         assert self._model is not None
 
-        min_speech_samples = int(
-            self.min_speech_duration_s * self.sample_rate
-        )
-        min_silence_samples = int(
-            self.min_silence_duration_s * self.sample_rate
-        )
+        min_speech_samples = int(self.min_speech_duration_s * self.sample_rate)
+        min_silence_samples = int(self.min_silence_duration_s * self.sample_rate)
 
         speeches: list[dict] = []
         current_speech: dict | None = None
@@ -136,9 +128,7 @@ class VoiceActivityDetector:
                     current_speech["end"] = end
             else:
                 if current_speech is not None:
-                    duration = (
-                        current_speech["end"] - current_speech["start"]
-                    )
+                    duration = current_speech["end"] - current_speech["start"]
                     if duration >= min_speech_samples:
                         speeches.append(current_speech)
                     current_speech = None
@@ -148,15 +138,11 @@ class VoiceActivityDetector:
             if duration >= min_speech_samples:
                 speeches.append(current_speech)
 
-        merged = self._merge_close_segments(
-            speeches, min_silence_samples
-        )
+        merged = self._merge_close_segments(speeches, min_silence_samples)
         return merged
 
     @staticmethod
-    def _merge_close_segments(
-        segments: list[dict], min_gap: int
-    ) -> list[dict]:
+    def _merge_close_segments(segments: list[dict], min_gap: int) -> list[dict]:
         """Merge speech segments separated by short silences."""
         if not segments:
             return []
@@ -171,9 +157,7 @@ class VoiceActivityDetector:
 
         return merged
 
-    def detect_batch(
-        self, audio_paths: list[str]
-    ) -> dict[str, list[SpeechSegment]]:
+    def detect_batch(self, audio_paths: list[str]) -> dict[str, list[SpeechSegment]]:
         """Detect speech in multiple audio files.
 
         Args:

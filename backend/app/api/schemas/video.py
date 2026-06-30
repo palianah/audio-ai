@@ -15,17 +15,13 @@ class VideoUploadResponse(BaseModel):
 
 class SyncRequest(BaseModel):
     video_id: str
-    stem_ids: list[str] = Field(
-        description="List of uploaded audio stem IDs to sync"
-    )
+    stem_ids: list[str] = Field(description="List of uploaded audio stem IDs to sync")
 
 
 class SyncNoteSchema(BaseModel):
     timestamp_s: float
     duration_s: float
-    level: str = Field(
-        description="info, warning, or error"
-    )
+    level: str = Field(description="info, warning, or error")
     message: str
 
 
@@ -43,9 +39,7 @@ class StemSyncResult(BaseModel):
     offset_ms: int
     matched_face_id: int
     overall_confidence: float
-    segment_maps: list[SegmentMapSchema] = Field(
-        default_factory=list
-    )
+    segment_maps: list[SegmentMapSchema] = Field(default_factory=list)
     notes: list[SyncNoteSchema] = Field(default_factory=list)
 
 
