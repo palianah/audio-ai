@@ -17,7 +17,7 @@
     "react-dom": "^18.3.1",
     "zustand": "^5.0.2",
     "wavesurfer.js": "^7.9.0",
-    "wavesurfer-multitrack": "^1.0.7",
+    "wavesurfer-multitrack": "^0.4.12",
     "lucide-react": "^0.468.0",
     "clsx": "^2.1.1",
     "tailwind-merge": "^2.6.0",

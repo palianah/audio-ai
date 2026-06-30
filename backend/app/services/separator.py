@@ -22,4 +22,6 @@ class StemSeparator:
         Returns:
             Dict mapping stem name to output file path
         """
-        raise NotImplementedError("Stem separation will be implemented in next iteration")
+        raise NotImplementedError(
+            "Stem separation will be implemented in next iteration"
+        )
