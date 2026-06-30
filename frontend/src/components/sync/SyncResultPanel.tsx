@@ -1,6 +1,16 @@
-import { AlertCircle, AlertTriangle, CheckCircle, Info } from "lucide-react";
+import { useCallback, useState } from "react";
+import {
+  AlertCircle,
+  AlertTriangle,
+  CheckCircle,
+  Download,
+  Info,
+  Wand2,
+} from "lucide-react";
 
 import { useSyncStore } from "@/stores/sync-store";
+
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 const CONFIDENCE_COLORS = {
   high: "bg-green-500/20 text-green-400 border-green-500/30",
@@ -27,8 +37,40 @@ const NOTE_ICONS = {
 } as const;
 
 export function SyncResultPanel() {
-  const { syncResults, syncNotes, syncStatus, updateStemOffset } =
+  const { syncResults, syncNotes, syncStatus, updateStemOffset, videoInfo } =
     useSyncStore();
+  const [applying, setApplying] = useState(false);
+  const [appliedStems, setAppliedStems] = useState<Set<string>>(new Set());
+
+  const handleApplyAndDownload = useCallback(async () => {
+    if (!videoInfo) return;
+    setApplying(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/sync/apply`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          video_id: videoInfo.video_id,
+          stem_results: syncResults,
+        }),
+      });
+      if (!res.ok) throw new Error("Apply failed");
+
+      const data = await res.json();
+      const stems = new Set<string>(Object.keys(data.output_files));
+      setAppliedStems(stems);
+
+      for (const stemId of stems) {
+        const url = `${API_BASE}/api/sync/download/${stemId}?video_id=${videoInfo.video_id}`;
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${stemId}_synced.wav`;
+        a.click();
+      }
+    } finally {
+      setApplying(false);
+    }
+  }, [videoInfo, syncResults]);
 
   if (syncStatus !== "completed" || syncResults.length === 0) {
     return null;
@@ -36,7 +78,23 @@ export function SyncResultPanel() {
 
   return (
     <div className="space-y-3 border-t border-editor-surface p-3">
-      <h3 className="text-sm font-semibold">Sync Results</h3>
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-semibold">Sync Results</h3>
+        <button
+          onClick={handleApplyAndDownload}
+          disabled={applying}
+          className="flex items-center gap-1 rounded bg-editor-waveform/20 px-2 py-1 text-[11px] font-medium text-editor-waveform transition hover:bg-editor-waveform/30 disabled:opacity-40"
+        >
+          {applying ? (
+            <Wand2 size={12} className="animate-spin" />
+          ) : appliedStems.size > 0 ? (
+            <Download size={12} />
+          ) : (
+            <Wand2 size={12} />
+          )}
+          {applying ? "Processing..." : appliedStems.size > 0 ? "Re-download" : "Apply & Download"}
+        </button>
+      </div>
 
       {/* Per-stem results */}
       {syncResults.map((result) => {

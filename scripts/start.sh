@@ -34,13 +34,30 @@ echo "==================="
 # ─── Docker Mode (default) ───
 if [ "$MODE" != "--local" ]; then
     if ! command -v docker &> /dev/null; then
-        echo "❌ Docker not found. Install Docker Desktop or use: ./scripts/start.sh --local"
-        exit 1
+        echo "⚠️  Docker not found — switching to local mode..."
+        MODE="--local"
+    fi
+fi
+
+if [ "$MODE" != "--local" ]; then
+    # Auto-start Docker Desktop if daemon is not running
+    if ! docker info > /dev/null 2>&1; then
+        echo "🐳 Starting Docker Desktop..."
+        open -a "Docker Desktop" 2>/dev/null || open -a "Docker" 2>/dev/null
+        for i in $(seq 1 60); do
+            docker info > /dev/null 2>&1 && break
+            sleep 2
+        done
+        if ! docker info > /dev/null 2>&1; then
+            echo "❌ Docker daemon failed to start. Open Docker Desktop manually."
+            exit 1
+        fi
+        echo "✅ Docker Desktop ready"
     fi
 
     trap cleanup_docker SIGINT SIGTERM EXIT
 
-    echo "🐳 Starting with Docker..."
+    echo "🐳 Building & starting containers..."
     cd "$PROJECT_DIR"
     docker compose up --build -d
 

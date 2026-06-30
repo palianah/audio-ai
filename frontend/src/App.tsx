@@ -2,6 +2,7 @@ import { useState } from "react";
 import { FolderOpen, Play, Pause, SkipBack } from "lucide-react";
 
 import { VideoPlayer } from "@/components/editor/VideoPlayer";
+import { WaveformTrack } from "@/components/editor/WaveformTrack";
 import { ImportDialog } from "@/components/import/ImportDialog";
 import { SyncResultPanel } from "@/components/sync/SyncResultPanel";
 import { useEditorStore } from "@/stores/editor-store";
@@ -18,7 +19,7 @@ export function App() {
   const [showImport, setShowImport] = useState(false);
   const { isPlaying, currentTime, duration, setPlaying, setCurrentTime } =
     useEditorStore();
-  const { syncStatus, syncProgress, videoInfo } = useSyncStore();
+  const { syncStatus, syncProgress, videoInfo, stemFiles } = useSyncStore();
 
   return (
     <div className="flex h-screen flex-col bg-editor-bg text-editor-text">
@@ -86,16 +87,27 @@ export function App() {
             )}
           </div>
 
-          {/* Timeline placeholder */}
-          <div className="flex flex-1 items-center justify-center">
-            {videoInfo ? (
-              <p className="text-sm text-editor-muted">
-                Timeline — {videoInfo.filename} ({videoInfo.duration_s.toFixed(1)}s)
-              </p>
+          {/* Timeline */}
+          <div className="flex-1 overflow-y-auto">
+            {stemFiles.length > 0 ? (
+              <div className="flex flex-col">
+                {stemFiles.map((stem, i) => (
+                  <WaveformTrack
+                    key={stem.stemId}
+                    stemId={stem.stemId}
+                    label={stem.filename}
+                    index={i}
+                    synced={syncStatus === "completed"}
+                    videoId={videoInfo?.video_id}
+                  />
+                ))}
+              </div>
             ) : (
-              <p className="text-editor-muted">
-                Click <strong>Import</strong> to load video + audio stems
-              </p>
+              <div className="flex h-full items-center justify-center">
+                <p className="text-editor-muted">
+                  Click <strong>Import</strong> to load video + audio stems
+                </p>
+              </div>
             )}
           </div>
         </div>

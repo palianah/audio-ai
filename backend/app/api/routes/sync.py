@@ -3,6 +3,11 @@
 import os
 import uuid
 
+import numpy as np
+import soundfile as sf
+from fastapi import APIRouter, File, HTTPException, UploadFile
+from fastapi.responses import FileResponse
+
 from app.api.schemas.video import (
     SyncAnalysisResponse,
     SyncApplyRequest,
@@ -12,7 +17,6 @@ from app.api.schemas.video import (
     VideoUploadResponse,
 )
 from app.core.config import settings
-from fastapi import APIRouter, File, HTTPException, UploadFile
 
 router = APIRouter(prefix="/api", tags=["sync"])
 
@@ -239,3 +243,67 @@ async def apply_sync(
             )
 
     return SyncApplyResponse(output_files=output_files, notes=all_notes)
+
+
+@router.get("/sync/download/{stem_id}")
+async def download_synced_wav(stem_id: str, video_id: str) -> FileResponse:
+    """Download a synced WAV file."""
+    output_dir = os.path.join(settings.output_dir, "synced", video_id)
+    file_path = os.path.join(output_dir, f"{stem_id}_synced.wav")
+
+    if not os.path.exists(file_path):
+        raise HTTPException(404, "Synced file not found. Run /sync/apply first.")
+
+    return FileResponse(
+        file_path,
+        media_type="audio/wav",
+        filename=f"{stem_id}_synced.wav",
+    )
+
+
+@router.get("/waveform/{stem_id}")
+async def get_waveform(
+    stem_id: str, points: int = 800, synced: bool = False, video_id: str = ""
+) -> dict:
+    """Get waveform peak data for rendering.
+
+    Args:
+        stem_id: Stem identifier
+        points: Number of data points (width in pixels)
+        synced: If True, return waveform of synced file
+        video_id: Required if synced=True
+    """
+    if synced and video_id:
+        file_path = os.path.join(
+            settings.output_dir, "synced", video_id, f"{stem_id}_synced.wav"
+        )
+    elif stem_id in _stem_store:
+        file_path = _stem_store[stem_id]
+    else:
+        raise HTTPException(404, "Stem not found")
+
+    if not os.path.exists(file_path):
+        raise HTTPException(404, "Audio file not found")
+
+    audio, sr = sf.read(file_path, dtype="float32")
+    if audio.ndim > 1:
+        audio = audio.mean(axis=1)
+
+    total_samples = len(audio)
+    samples_per_point = max(1, total_samples // points)
+
+    peaks: list[list[float]] = []
+    for i in range(0, total_samples, samples_per_point):
+        chunk = audio[i : i + samples_per_point]
+        if len(chunk) > 0:
+            peaks.append(
+                [round(float(np.min(chunk)), 4), round(float(np.max(chunk)), 4)]
+            )
+
+    return {
+        "stem_id": stem_id,
+        "sample_rate": sr,
+        "duration_s": round(total_samples / sr, 3),
+        "points": len(peaks),
+        "peaks": peaks,
+    }
