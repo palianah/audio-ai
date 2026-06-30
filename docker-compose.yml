@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   frontend:
     build:
@@ -25,6 +23,7 @@ services:
       - ./backend/app:/app/app
       - ./uploads:/app/uploads
       - ./outputs:/app/outputs
+      - ./assets:/app/assets
     environment:
       - REDIS_URL=redis://redis:6379/0
       - UPLOAD_DIR=/app/uploads
