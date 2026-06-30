@@ -31,6 +31,10 @@ outputs/
 *.aac
 *.m4a
 
+# Exception: test sample assets
+!assets/sample/*.wav
+!assets/sample/*.mp4
+
 # AI Models (large)
 /models/
 *.pt
