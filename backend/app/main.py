@@ -1,11 +1,12 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.routes.sync import router as sync_router
 from app.core.config import settings
 
 app = FastAPI(
     title="Audio AI Editor",
-    description="AI-powered audio editing API with stem separation, transcription, and effects processing",
+    description="AI-powered audio editing API with stem separation, transcription, sync, and effects processing",
     version="0.1.0",
 )
 
@@ -16,6 +17,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(sync_router)
 
 
 @app.get("/health")
