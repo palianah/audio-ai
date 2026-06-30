@@ -7,6 +7,13 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 MODE="${1:-docker}"
+# --rebuild: force Docker image rebuild
+# --local: run without Docker
+REBUILD=false
+if [ "$MODE" = "--rebuild" ]; then
+    REBUILD=true
+    MODE="docker"
+fi
 
 cleanup_docker() {
     echo ""
@@ -57,9 +64,13 @@ if [ "$MODE" != "--local" ]; then
 
     trap cleanup_docker SIGINT SIGTERM EXIT
 
-    echo "🐳 Building & starting containers..."
     cd "$PROJECT_DIR"
-    docker compose up --build -d
+    if [ "$REBUILD" = true ] || ! docker compose images -q 2>/dev/null | head -1 | grep -q .; then
+        echo "🐳 Building images (first run or --rebuild)..."
+        docker compose build
+    fi
+    echo "🐳 Starting containers..."
+    docker compose up -d
 
     # Wait for backend
     echo "⏳ Waiting for services..."

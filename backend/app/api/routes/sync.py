@@ -45,7 +45,7 @@ async def upload_video(file: UploadFile = File(...)) -> VideoUploadResponse:
     processor = VideoProcessor()
     info = processor.ingest(video_path)
 
-    _video_store[video_id] = {
+    _video_store[info.video_id] = {
         "info": info,
         "path": video_path,
     }
@@ -242,6 +242,35 @@ async def apply_sync(
                 )
             )
 
+    combined_path = os.path.join(output_dir, "_combined.wav")
+    stem_paths = [
+        os.path.join(output_dir, f)
+        for f in sorted(os.listdir(output_dir))
+        if f.endswith("_synced.wav")
+    ]
+    if stem_paths:
+        first, sr = sf.read(stem_paths[0], dtype="float32")
+        if first.ndim > 1:
+            first = first.mean(axis=1)
+        combined = np.zeros_like(first)
+
+        for path in stem_paths:
+            audio, _ = sf.read(path, dtype="float32")
+            if audio.ndim > 1:
+                audio = audio.mean(axis=1)
+            length = min(len(combined), len(audio))
+            for i in range(length):
+                if combined[i] == 0.0:
+                    combined[i] = audio[i]
+
+        peak = np.max(np.abs(combined))
+        if peak > 0.95:
+            combined *= 0.95 / peak
+
+        sf.write(combined_path, combined, sr, subtype="PCM_16")
+
+    output_files["_combined"] = combined_path
+
     return SyncApplyResponse(output_files=output_files, notes=all_notes)
 
 
@@ -259,6 +288,47 @@ async def download_synced_wav(stem_id: str, video_id: str) -> FileResponse:
         media_type="audio/wav",
         filename=f"{stem_id}_synced.wav",
     )
+
+
+@router.get("/sync/preview/{video_id}")
+async def get_preview_audio(video_id: str) -> FileResponse:
+    """Get a single combined WAV of all synced stems for preview with video."""
+    output_dir = os.path.join(settings.output_dir, "synced", video_id)
+    combined_path = os.path.join(output_dir, "_combined.wav")
+
+    if os.path.exists(combined_path):
+        return FileResponse(combined_path, media_type="audio/wav")
+
+    if not os.path.isdir(output_dir):
+        raise HTTPException(404, "No synced files found. Run /sync/apply first.")
+
+    stem_files = [
+        os.path.join(output_dir, f)
+        for f in sorted(os.listdir(output_dir))
+        if f.endswith("_synced.wav")
+    ]
+    if not stem_files:
+        raise HTTPException(404, "No synced stem files found.")
+
+    first, sr = sf.read(stem_files[0], dtype="float32")
+    if first.ndim > 1:
+        first = first.mean(axis=1)
+    combined = first.copy()
+
+    for path in stem_files[1:]:
+        audio, _ = sf.read(path, dtype="float32")
+        if audio.ndim > 1:
+            audio = audio.mean(axis=1)
+        length = min(len(combined), len(audio))
+        combined[:length] += audio[:length]
+
+    peak = np.max(np.abs(combined))
+    if peak > 1.0:
+        combined /= peak
+
+    sf.write(combined_path, combined, sr, subtype="PCM_16")
+
+    return FileResponse(combined_path, media_type="audio/wav")
 
 
 @router.get("/waveform/{stem_id}")

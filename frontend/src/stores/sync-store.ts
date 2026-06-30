@@ -15,6 +15,8 @@ export interface SyncState {
   syncNotes: SyncNote[];
   syncStatus: "idle" | "uploading" | "analyzing" | "completed" | "failed";
   syncProgress: number;
+  appliedStemUrls: Record<string, string>;
+  applyTimestamp: number;
 
   setVideoInfo: (info: VideoUploadResponse, url: string) => void;
   addStem: (stemId: string, filename: string) => void;
@@ -23,6 +25,7 @@ export interface SyncState {
   setSyncProgress: (progress: number) => void;
   setSyncResults: (response: SyncAnalysisResponse) => void;
   updateStemOffset: (stemId: string, offsetMs: number) => void;
+  setAppliedStemUrls: (urls: Record<string, string>) => void;
   reset: () => void;
 }
 
@@ -34,6 +37,8 @@ export const useSyncStore = create<SyncState>((set) => ({
   syncNotes: [],
   syncStatus: "idle",
   syncProgress: 0,
+  appliedStemUrls: {},
+  applyTimestamp: 0,
 
   setVideoInfo: (info, url) =>
     set({ videoInfo: info, videoUrl: url }),
@@ -69,6 +74,9 @@ export const useSyncStore = create<SyncState>((set) => ({
       ),
     })),
 
+  setAppliedStemUrls: (urls) =>
+    set({ appliedStemUrls: urls, applyTimestamp: Date.now() }),
+
   reset: () =>
     set({
       videoInfo: null,
@@ -78,5 +86,7 @@ export const useSyncStore = create<SyncState>((set) => ({
       syncNotes: [],
       syncStatus: "idle",
       syncProgress: 0,
+      appliedStemUrls: {},
+      applyTimestamp: 0,
     }),
 }));

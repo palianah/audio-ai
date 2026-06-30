@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from "react";
-import { Film, Music, Upload, X } from "lucide-react";
+import { Film, Loader2, Music, Upload, X } from "lucide-react";
 
 import { useSyncStore } from "@/stores/sync-store";
 
@@ -9,6 +9,7 @@ export function ImportDialog({ onClose }: { onClose: () => void }) {
   const {
     videoInfo,
     stemFiles,
+    syncStatus,
     setVideoInfo,
     addStem,
     removeStem,
@@ -18,8 +19,11 @@ export function ImportDialog({ onClose }: { onClose: () => void }) {
   } = useSyncStore();
 
   const [uploading, setUploading] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
   const videoInputRef = useRef<HTMLInputElement>(null);
   const audioInputRef = useRef<HTMLInputElement>(null);
+
+  const busy = uploading || analyzing;
 
   const handleVideoUpload = useCallback(
     async (file: File) => {
@@ -71,6 +75,7 @@ export function ImportDialog({ onClose }: { onClose: () => void }) {
   const handleAnalyze = useCallback(async () => {
     if (!videoInfo || stemFiles.length === 0) return;
 
+    setAnalyzing(true);
     setSyncStatus("analyzing");
     setSyncProgress(0);
 
@@ -87,10 +92,13 @@ export function ImportDialog({ onClose }: { onClose: () => void }) {
       if (!res.ok) throw new Error("Sync analysis failed");
       const data = await res.json();
       setSyncResults(data);
+      onClose();
     } catch {
       setSyncStatus("failed");
+    } finally {
+      setAnalyzing(false);
     }
-  }, [videoInfo, stemFiles, setSyncStatus, setSyncProgress, setSyncResults]);
+  }, [videoInfo, stemFiles, setSyncStatus, setSyncProgress, setSyncResults, onClose]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
@@ -99,7 +107,8 @@ export function ImportDialog({ onClose }: { onClose: () => void }) {
           <h2 className="text-lg font-semibold">Import & Sync</h2>
           <button
             onClick={onClose}
-            className="rounded p-1 hover:bg-editor-bg"
+            disabled={busy}
+            className="rounded p-1 hover:bg-editor-bg disabled:opacity-30"
           >
             <X size={18} />
           </button>
@@ -184,11 +193,25 @@ export function ImportDialog({ onClose }: { onClose: () => void }) {
           {/* Analyze Button */}
           <button
             onClick={handleAnalyze}
-            disabled={!videoInfo || stemFiles.length === 0 || uploading}
-            className="flex w-full items-center justify-center gap-2 rounded-lg bg-editor-accent px-4 py-2.5 font-medium text-white transition hover:bg-editor-accent/80 disabled:opacity-40"
+            disabled={!videoInfo || stemFiles.length === 0 || busy}
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-editor-accent px-4 py-2.5 font-medium text-white transition hover:bg-editor-accent/80 disabled:cursor-not-allowed disabled:opacity-40"
           >
-            <Upload size={18} />
-            Analyze & Sync
+            {analyzing ? (
+              <>
+                <Loader2 size={18} className="animate-spin" />
+                Analyzing... please wait
+              </>
+            ) : syncStatus === "completed" ? (
+              <>
+                <Upload size={18} />
+                Re-analyze
+              </>
+            ) : (
+              <>
+                <Upload size={18} />
+                Analyze & Sync
+              </>
+            )}
           </button>
         </div>
       </div>

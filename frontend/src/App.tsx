@@ -97,8 +97,6 @@ export function App() {
                     stemId={stem.stemId}
                     label={stem.filename}
                     index={i}
-                    synced={syncStatus === "completed"}
-                    videoId={videoInfo?.video_id}
                   />
                 ))}
               </div>
