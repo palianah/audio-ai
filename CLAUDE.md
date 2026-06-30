@@ -7,6 +7,7 @@
 
 ### Frontend
 - **Framework**: React 18+ with TypeScript
+- **Package Manager**: pnpm 11
 - **Build Tool**: Vite
 - **Styling**: TailwindCSS + shadcn/ui
 - **Audio Visualization**: WaveSurfer.js (multitrack plugin) for waveform rendering
@@ -79,7 +80,7 @@ audio-ai/
 5. **Chunked Processing**: Large files are processed in segments to manage memory
 
 ## Code Conventions
-- **Frontend**: ESLint + Prettier, named exports, barrel files for components
+- **Frontend**: ESLint 9 flat config + typescript-eslint, named exports, barrel files for components
 - **Backend**: Black + isort + mypy, type hints everywhere, docstrings on public functions
 - **Git**: Conventional Commits (`feat:`, `fix:`, `chore:`, `docs:`)
 - **Branch Strategy**: `main` (stable) → `develop` → feature branches (`feat/xxx`)
